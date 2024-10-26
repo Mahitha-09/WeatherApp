@@ -44,6 +44,7 @@
         <h1>Weather App</h1>
         <input type="text" id="city" placeholder="Enter city name">
         <button onclick="getWeather()">Get Weather</button>
+        <div id="loading" style="display:none;">Loading...</div>    
         <div id="weatherResult"></div>
     </div>
 
@@ -52,7 +53,10 @@
             const apiKey = '80c6cbafc886f08c0045760e2ffc4672'; 
             const city = document.getElementById('city').value;
             const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-
+            
+             document.getElementById('loading').style.display = 'block'; // Show loading
+             document.getElementById('weatherResult').innerHTML = ''; // Clear previous results
+          
             try {
                 const response = await fetch(url);
                 const data = await response.json();
