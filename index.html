@@ -1,81 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Weather App</title>
-    <style>
-        /* Basic styling for the app */
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: #f0f0f0;
-        }
-        .container {
-            text-align: center;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        input {
-            padding: 10px;
-            font-size: 16px;
-            width: 70%;
-            margin-right: 10px;
-        }
-        button {
-            padding: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #weatherResult {
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App</title>
+  <style>
+    /* Basic styling */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+    .weather-card {
+      background-color: #ffffff;
+      padding: 30px 20px;
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+      border-radius: 10px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .app-title {
+      font-size: 1.5em;
+      color: #007BFF;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .temperature {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #333333;
+    }
+    .city-name {
+      font-size: 1.2em;
+      color: #666666;
+    }
+    .city-input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .get-weather-button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007BFF;
+      color: white;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .loading {
+      margin-top: 10px;
+      color: #555555;
+    }
+    .error-message {
+      margin-top: 10px;
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 </head>
-<body>
+<body ng-app="weatherApp" ng-controller="WeatherController as weatherCtrl">
 
-    <div class="container">
-        <h1>Weather App</h1>
-        <input type="text" id="city" placeholder="Enter city name">
-        <button onclick="getWeather()">Get Weather</button>
-        <div id="loading" style="display:none;">Loading...</div>    
-        <div id="weatherResult"></div>
+  <div class="weather-card">
+    <h1 class="app-title">The Weather App</h1>
+    
+    <div ng-if="weatherCtrl.weatherData">
+      <p class="temperature">{{ weatherCtrl.weatherData.main.temp }}° Celsius</p>
+      <p class="city-name">{{ weatherCtrl.weatherData.name }}</p>
     </div>
 
-    <script>
-        async function getWeather() {
-            const apiKey = '80c6cbafc886f08c0045760e2ffc4672'; 
-            const city = document.getElementById('city').value;
-            const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-            
-             document.getElementById('loading').style.display = 'block'; // Show loading
-             document.getElementById('weatherResult').innerHTML = ''; // Clear previous results
-          
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
+    <input
+      type="text"
+      ng-model="weatherCtrl.city"
+      placeholder="Enter city name"
+      class="city-input"
+    />
+    
+    <button ng-click="weatherCtrl.getWeather()" class="get-weather-button">Get Weather</button>
+    
+    <div ng-if="weatherCtrl.loading" class="loading">Loading...</div>
+    <div ng-if="weatherCtrl.errorMessage" class="error-message">{{ weatherCtrl.errorMessage }}</div>
+  </div>
 
-                if (data.cod === "404") {
-                    document.getElementById('weatherResult').innerHTML = `<p>City not found. Please try again.</p>`;
-                } else {
-                    document.getElementById('weatherResult').innerHTML = `
-                        <h2>${data.name}</h2>
-                        <p>Temperature: ${data.main.temp}°C</p>
-                        <p>Weather: ${data.weather[0].description}</p>
-                        <p>Humidity: ${data.main.humidity}%</p>
-                    `;
-                }
-            } catch (error) {
-                document.getElementById('weatherResult').innerHTML = `<p>Error fetching data.</p>`;
-            }
-        }
-    </script>
+  <script>
+    angular.module('weatherApp', [])
+      .controller('WeatherController', ['$http', function($http) {
+        const vm = this;
+        vm.city = '';
+        vm.weatherData = null;
+        vm.loading = false;
+        vm.errorMessage = '';
+
+        vm.getWeather = function() {
+          const apiKey = '80c6cbafc886f08c0045760e2ffc4672';
+          const url = `https://api.openweathermap.org/data/2.5/weather?q=${vm.city}&appid=${apiKey}&units=metric`;
+
+          vm.loading = true;
+          vm.weatherData = null;
+          vm.errorMessage = '';
+
+          $http.get(url)
+            .then(function(response) {
+              vm.weatherData = response.data;
+              vm.loading = false;
+            })
+            .catch(function(error) {
+              vm.errorMessage = 'City not found. Please try again.';
+              vm.loading = false;
+            });
+        };
+      }]);
+  </script>
 
 </body>
 </html>
